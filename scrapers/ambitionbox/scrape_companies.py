@@ -1,5 +1,5 @@
 """
-Personal learning script: fetch company names from AmbitionBox list pages.
+Step 1: fetch company names from AmbitionBox list pages.
 
 Note: AmbitionBox Terms of Use prohibit automated scraping. Use only for
 personal learning; do not republish data or run aggressive bulk jobs.
@@ -8,10 +8,14 @@ personal learning; do not republish data or run aggressive bulk jobs.
 import csv
 import re
 import time
+from pathlib import Path
 from urllib.parse import urlencode
 
 import requests
 from bs4 import BeautifulSoup
+
+ROOT = Path(__file__).resolve().parents[2]
+OUTPUT_CSV = ROOT / "companies.csv"
 
 BASE_URL = "https://www.ambitionbox.com/list-of-companies"
 FILTERS = {
@@ -29,7 +33,7 @@ HEADERS = {
     "Accept-Language": "en-IN,en;q=0.9",
 }
 
-DELAY_SECONDS = 3  # be polite; increase if you get blocked
+DELAY_SECONDS = 3
 
 
 def build_page_url(page: int) -> str:
@@ -75,14 +79,10 @@ def fetch_page(session: requests.Session, page: int) -> list[dict]:
     if "access denied" in response.text.lower():
         raise RuntimeError(f"Blocked on page {page}. Stop and retry later with higher delay.")
 
-    companies = parse_companies(response.text)
-    if not companies:
-        return []
-
-    return companies
+    return parse_companies(response.text)
 
 
-def scrape_all(max_pages: int | None = None, output_csv: str = "companies.csv") -> None:
+def scrape_all(max_pages: int | None = None, output_csv: Path = OUTPUT_CSV) -> None:
     session = requests.Session()
     all_companies: list[dict] = []
     page = 1
@@ -93,18 +93,15 @@ def scrape_all(max_pages: int | None = None, output_csv: str = "companies.csv") 
 
         print(f"Fetching page {page}...")
         batch = fetch_page(session, page)
-
         if not batch:
             print("No more companies found.")
             break
 
         all_companies.extend(batch)
         print(f"  got {len(batch)} companies (total so far: {len(all_companies)})")
-
         page += 1
         time.sleep(DELAY_SECONDS)
 
-    # dedupe by slug/name
     seen = set()
     unique = []
     for row in all_companies:
@@ -114,8 +111,8 @@ def scrape_all(max_pages: int | None = None, output_csv: str = "companies.csv") 
         seen.add(key)
         unique.append(row)
 
-    with open(output_csv, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=["company_name", "slug", "rating", "profile_url"])
+    with output_csv.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=["company_name", "slug", "rating", "profile_url"])
         writer.writeheader()
         writer.writerows(unique)
 
@@ -123,4 +120,4 @@ def scrape_all(max_pages: int | None = None, output_csv: str = "companies.csv") 
 
 
 if __name__ == "__main__":
-    scrape_all(max_pages=None, output_csv="companies.csv")
+    scrape_all()

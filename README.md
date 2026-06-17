@@ -15,7 +15,7 @@ Built as a portfolio project demonstrating web scraping, workflow automation, RA
 | **Product / display name** | Job Jarvios |
 | **GitHub repo / folder** | `job-jarvios` |
 | **Python package** | `job_jarvios` |
-| **Database file** | `job_jarvios.db` |
+| **Database file** | `job_jarvios` (MongoDB) |
 | **Tagline** | Personal AI career assistant |
 
 Inspired by the idea of a personal assistant (J.A.R.V.I.S.) — built to help you find the right job, not just more jobs.
@@ -48,12 +48,12 @@ Collect all jobs  →  Store in database  →  Match against resume  →  Alert 
 | Component | Tool | Cost |
 |-----------|------|------|
 | Language | Python 3.11+ | Free |
-| API (later) | FastAPI | Free |
+| API | FastAPI + uvicorn | Free |
 | Scraping | requests, BeautifulSoup | Free |
 | LLM | Ollama (llama3.2) | Free |
 | Embeddings | Ollama (nomic-embed-text) | Free |
 | Vector DB | Qdrant | Free (Docker) |
-| Database | SQLite → PostgreSQL | Free |
+| Database | MongoDB (local) + pymongo | Free |
 | Automation | n8n (self-hosted) | Free |
 | Notifications | Gmail SMTP / Telegram Bot | Free |
 | MCP (later) | Python MCP SDK | Free |
@@ -64,9 +64,9 @@ Collect all jobs  →  Store in database  →  Match against resume  →  Alert 
 
 | Phase | Status | Notes |
 |-------|--------|-------|
-| Phase 0 — Setup | In progress | Basic scripts exist |
-| Phase 1 — Company list | **Done** | ~5,700 companies in `data/companies.csv` |
-| Phase 1 — Job scraping | Not started | Next step |
+| Phase 0 — Setup | **Done** | FastAPI + Express-style layout |
+| Phase 1 — Company list | **Done** | ~5,700 companies in `companies.csv` |
+| Phase 1 — Job scraping | **In progress** | Career URL finder + job scraper added |
 | Phase 2 — Resume + vectors | Not started | — |
 | Phase 3 — RAG matching | Not started | — |
 | Phase 4 — n8n automation | Not started | — |
@@ -76,71 +76,73 @@ Collect all jobs  →  Store in database  →  Match against resume  →  Alert 
 
 ## Project Structure
 
-### Current layout
+### Current layout (Express-style + FastAPI)
 
 ```
-job-jarvios/
-├── README.md
+job-jarvio/
+├── server.py                             # entry point (like server.js)
+├── application.py                        # FastAPI app (like app.js)
+├── config.env
+├── config.env.example
 ├── requirements.txt
-├── scrape_ambitionbox_companies.py       # company list scraper
-├── generate_project_plan.py              # generates Excel project plan
-├── companies.csv                         # ~5,700 companies (move to data/)
-└── Job_Jarvios_Project_Plan.xlsx         # detailed plan (if generated)
-```
-
-### Target layout (proper structure)
-
-```
-job-jarvios/
-├── README.md
-├── .env.example
-├── requirements.txt
-├── docker-compose.yml                    # n8n, Ollama, Qdrant
+├── companies.csv
+│
+├── configs/
+│   ├── settings.py                       # env + app constants
+│   └── db/
+│       ├── mongo_conn.py                 # like configs/db/conveyance.js
+│       └── collections.py                # like configs/db/tables.js
+│
+├── routes/
+│   ├── router_mapping.py                 # like routes/routerMapping.js
+│   ├── health_routes.py
+│   ├── company_routes.py
+│   ├── job_routes.py
+│   └── ingestion_routes.py
+│
+├── controllers/
+│   ├── health_controller.py
+│   ├── company_controller.py
+│   ├── job_controller.py
+│   └── ingestion_controller.py
+│
+├── models/
+│   ├── companies/
+│   │   └── company_model.py              # like Sequelize define()
+│   └── jobs/
+│       └── job_model.py
+│
+├── middleware/
+│   └── error_handler.py                  # like middleware/error.js
+│
+├── utils/
+│   └── app_error.py                      # like utils/appError.js
 │
 ├── data/
-│   ├── companies.csv                     # AmbitionBox company list
-│   └── exports/                          # CSV exports, backups
-│
-├── db/
-│   ├── schema.sql                        # companies, jobs, matches tables
-│   └── job_jarvios.db                   # SQLite (gitignored)
+│   ├── known_career_urls.json
+│   └── exports/jobs.csv
 │
 ├── scrapers/
-│   ├── ambitionbox/
-│   │   └── scrape_companies.py
+│   ├── ambitionbox/scrape_companies.py
 │   └── careers/
-│       ├── find_career_urls.py           # resolve career page per company
-│       └── scrape_jobs.py                # extract job postings
+│       ├── find_career_urls.py
+│       ├── scrape_jobs.py
+│       └── http_client.py
 │
-├── app/
-│   ├── config.py                         # env vars, paths
-│   ├── models/                           # database models
-│   └── services/
-│       ├── ingest.py                     # save jobs to DB
-│       ├── resume.py                     # parse + chunk resume
-│       ├── embed.py                      # Ollama embeddings
-│       ├── match.py                      # vector search + LLM rerank
-│       └── notify.py                     # email / Telegram
-│
-├── app/api/                              # FastAPI (later)
-│   └── main.py
-│
-├── mcp/                                  # MCP server (later)
-│   └── server.py
-│
-├── n8n/
-│   └── workflows/                        # exported n8n JSON workflows
-│
-├── scripts/
-│   ├── run_daily_pipeline.py             # scrape → match → notify
-│   └── seed_resume.py
-│
-├── tests/
-│   └── test_match.py
-│
-└── docs/
-    ├── architecture.md
-    └── Job_Jarvios_Project_Plan.xlsx
+└── scripts/                              # CLI alternatives to API
+    ├── import_companies.py
+    └── run_job_ingestion.py
+```
+
+### Target layout (later phases)
+
+```
+job-jarvio/
+├── services/                             # resume, embed, match, notify (Phase 3+)
+├── validations/
+├── cron/
+├── n8n/workflows/
+└── mcp/
 ```
 
 ---
@@ -152,7 +154,7 @@ job-jarvios/
 ```mermaid
 flowchart LR
     A[AmbitionBox company list] --> B[Career page scraper]
-    B --> C[(SQLite - all jobs)]
+    B --> C[(MongoDB - all jobs)]
     D[Your resume] --> E[Chunk + embed]
     E --> F[(Qdrant vector DB)]
     C --> G[Embed new jobs]
@@ -194,12 +196,12 @@ Irrelevant jobs stay in the DB but are never sent in alerts.
 - [ ] Reorganize into target folder structure
 - [ ] Docker Compose: n8n, Ollama, Qdrant
 - [ ] Pull Ollama models: `llama3.2`, `nomic-embed-text`
-- [ ] `.env.example` for config
+- [ ] `config.env` for MongoDB Atlas credentials
 
 ### Phase 1 — Data collection (Week 1)
 
 - [x] Scrape filtered company list from AmbitionBox (~5,700 companies)
-- [ ] SQLite schema: `companies`, `jobs`, `matches`
+- [x] MongoDB collections: `companies`, `jobs`
 - [ ] Career page URL finder (start with top 20–50 companies)
 - [ ] Career page job scraper (title, location, description, apply URL)
 - [ ] Job deduplication by URL
@@ -249,7 +251,8 @@ Irrelevant jobs stay in the DB but are never sent in alerts.
 ### Phase 7 — Enhancements (Later)
 
 - [ ] Ingest Naukri / LinkedIn job alert emails via IMAP
-- [ ] FastAPI REST API (`GET /matches/today`, `POST /resume`)
+- [x] FastAPI REST API (companies, jobs, ingestion)
+- [ ] Resume + match endpoints (`GET /matches/today`, `POST /resume`)
 - [ ] MCP server for chat-based job search
 - [ ] Simple web dashboard (view matches, mark applied)
 
@@ -265,61 +268,89 @@ Irrelevant jobs stay in the DB but are never sent in alerts.
 ### Install Python dependencies
 
 ```bash
-cd job-jarvios
+cd job-jarvio
 pip install -r requirements.txt
 ```
 
-### Scrape company list (already done)
+### Step 1 — Scrape company list (already done)
 
 ```bash
-python scrape_ambitionbox_companies.py
+python scrapers/ambitionbox/scrape_companies.py
 ```
 
-Output: `companies.csv` with columns `company_name`, `slug`, `rating`, `profile_url`.
-
-### Generate project plan Excel
+### Start the API (main entry point)
 
 ```bash
-pip install openpyxl
-python generate_project_plan.py
+cd job-jarvio
+pip install -r requirements.txt
+python server.py
 ```
 
-Output: `Job_Jarvios_Project_Plan.xlsx`
+- API base: `http://localhost:8000/api`
+- Swagger docs: `http://localhost:8000/docs`
+- Health check: `GET http://localhost:8000/api/health`
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/health` | DB ping + status |
+| GET | `/api/companies` | List companies |
+| GET | `/api/companies/{slug}` | One company |
+| POST | `/api/companies/import` | Import `companies.csv` → MongoDB |
+| GET | `/api/jobs` | List scraped jobs |
+| POST | `/api/jobs/export` | Export jobs to CSV |
+| POST | `/api/ingestion/run` | Run full ingestion (background) |
+| GET | `/api/ingestion/status` | Check ingestion progress |
+
+Example:
+
+```bash
+curl -X POST "http://localhost:8000/api/ingestion/run?limit=10&slug=tcs"
+curl http://localhost:8000/api/ingestion/status
+```
+
+### Step 2 — Career URLs + job ingestion (CLI alternative)
+
+```bash
+# Full step-2 pipeline (top 20 companies)
+python scripts/run_job_ingestion.py
+
+# One company only
+python scripts/run_job_ingestion.py --slug tcs
+
+# Import companies only
+python scripts/import_companies.py
+```
+
+Output:
+- MongoDB database: `job_jarvios`
+- Jobs export: `data/exports/jobs.csv`
+
+Flow:
+1. Import `companies.csv` → MongoDB `companies` collection
+2. Resolve **official career URLs** (`data/known_career_urls.json` + discovery)
+3. Scrape job links from career pages → `jobs` collection
+4. Export all jobs to CSV
 
 ---
 
-## Database Schema (planned)
+## MongoDB collections
 
-```sql
--- companies
-id, name, slug, profile_url, career_url, last_scraped_at
+**companies:** name, slug, rating, profile_url, website_url, career_url, career_url_status, last_scraped_at
 
--- jobs
-id, company_id, title, location, description, url, source, posted_at, scraped_at
+**jobs:** company_id, company_slug, company_name, title, location, description, url, source, scraped_at
 
--- resume_chunks
-id, section, text, embedding_id
-
--- matches
-id, job_id, score, llm_reason, matched_at, notified_at
-```
+**Later:** resume_chunks, matches (Phase 3+)
 
 ---
 
-## Configuration (planned `.env`)
+## Configuration (`config.env`)
+
+Copy `config.env.example` → `config.env` and add your Atlas connection string:
 
 ```env
-OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_CHAT_MODEL=llama3.2
-OLLAMA_EMBED_MODEL=nomic-embed-text
-QDRANT_URL=http://localhost:6333
-DATABASE_PATH=./db/job_jarvios.db
-RESUME_PATH=./data/resume.txt
-TELEGRAM_BOT_TOKEN=
-GMAIL_USER=
-GMAIL_APP_PASSWORD=
-MATCH_SCORE_THRESHOLD=70
-TARGET_LOCATIONS=Mumbai,Pune,Remote
+MONGO_URI=mongodb+srv://USERNAME:PASSWORD@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority
+MONGO_DB_NAME=job_jarvios
+PORT=8000
 ```
 
 ---
@@ -329,7 +360,7 @@ TARGET_LOCATIONS=Mumbai,Pune,Remote
 | Decision | Choice | Reason |
 |----------|--------|--------|
 | Primary language | Python | Best for scraping, RAG, MCP |
-| API framework | FastAPI (later) | Closest to Express for JSON APIs |
+| API framework | FastAPI | Closest to Express for JSON APIs |
 | Start with framework? | No — scripts first | Simpler for personal single-user use |
 | Save all jobs? | Yes | Filter at match time, not scrape time |
 | LLM | Ollama local | Free, private resume data |
