@@ -1,0 +1,26 @@
+{
+  "wipro": {
+    "type": "workday",
+    "base_url": "https://careers.wipro.com",
+    "tenant": "wipro",
+    "site": "External"
+  },
+  "cognizant": {
+    "type": "workday",
+    "base_url": "https://careers.cognizant.com",
+    "tenant": "cognizant",
+    "site": "Cognizant_Careers"
+  },
+  "tech-mahindra": {
+    "type": "workday",
+    "base_url": "https://careers.techmahindra.com",
+    "tenant": "techmahindra",
+    "site": "TechM"
+  },
+  "dxc-technology": {
+    "type": "workday",
+    "base_url": "https://careers.dxc.com",
+    "tenant": "dxctechnology",
+    "site": "DXCJobs"
+  }
+}

@@ -1,10 +1,11 @@
 # Job Jarvios
 
-**Personal AI career assistant** — an intelligent job discovery system that surfaces relevant opportunities matched to your resume, skills, and experience.
+**Personal AI career assistant** — finds jobs from company career pages and (later) matches them to your resume.
 
-Job Jarvios collects postings from target company career pages, indexes them with vector search, ranks matches using a local LLM (RAG), and delivers a daily digest of the best-fit roles via email or Telegram.
-
-Built as a portfolio project demonstrating web scraping, workflow automation, RAG, vector databases, and local LLM integration on a free, self-hosted stack.
+| Doc | For |
+|-----|-----|
+| **[LEARNING.md](LEARNING.md)** | **Start here** — learn FastAPI → n8n → AI agent step by step |
+| [n8n/README.md](n8n/README.md) | Daily automation (Phase 2) |
 
 ---
 
@@ -49,7 +50,7 @@ Collect all jobs  →  Store in database  →  Match against resume  →  Alert 
 |-----------|------|------|
 | Language | Python 3.11+ | Free |
 | API | FastAPI + uvicorn | Free |
-| Scraping | requests, BeautifulSoup | Free |
+| Scraping | requests, BeautifulSoup, Playwright (JS sites) | Free |
 | LLM | Ollama (llama3.2) | Free |
 | Embeddings | Ollama (nomic-embed-text) | Free |
 | Vector DB | Qdrant | Free (Docker) |
@@ -98,13 +99,13 @@ job-jarvio/
 │   ├── health_routes.py
 │   ├── company_routes.py
 │   ├── job_routes.py
-│   └── ingestion_routes.py
+│   ├── pipeline_routes.py
 │
 ├── controllers/
 │   ├── health_controller.py
 │   ├── company_controller.py
 │   ├── job_controller.py
-│   └── ingestion_controller.py
+│   └── pipeline_controller.py
 │
 ├── models/
 │   ├── companies/
@@ -129,9 +130,7 @@ job-jarvio/
 │       ├── scrape_jobs.py
 │       └── http_client.py
 │
-└── scripts/                              # CLI alternatives to API
-    ├── import_companies.py
-    └── run_job_ingestion.py
+└── run.py                                # simple CLI (use this daily)
 ```
 
 ### Target layout (later phases)
@@ -228,7 +227,7 @@ Irrelevant jobs stay in the DB but are never sent in alerts.
 
 ### Phase 4 — Automation (Week 3–4)
 
-- [ ] `scripts/run_daily_pipeline.py` — full pipeline in one command
+- [x] `run.py` — full pipeline in one command
 - [ ] n8n workflow: daily cron → scrape → match → notify
 - [ ] Error handling and logging
 
@@ -251,7 +250,7 @@ Irrelevant jobs stay in the DB but are never sent in alerts.
 ### Phase 7 — Enhancements (Later)
 
 - [ ] Ingest Naukri / LinkedIn job alert emails via IMAP
-- [x] FastAPI REST API (companies, jobs, ingestion)
+- [x] FastAPI REST API (pipeline + read endpoints)
 - [ ] Resume + match endpoints (`GET /matches/today`, `POST /resume`)
 - [ ] MCP server for chat-based job search
 - [ ] Simple web dashboard (view matches, mark applied)
@@ -278,7 +277,7 @@ pip install -r requirements.txt
 python scrapers/ambitionbox/scrape_companies.py
 ```
 
-### Start the API (main entry point)
+### Start the API
 
 ```bash
 cd job-jarvio
@@ -286,39 +285,50 @@ pip install -r requirements.txt
 python server.py
 ```
 
-- API base: `http://localhost:8000/api`
-- Swagger docs: `http://localhost:8000/docs`
-- Health check: `GET http://localhost:8000/api/health`
+Swagger: `http://localhost:8000/docs`
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/health` | DB ping + status |
-| GET | `/api/companies` | List companies |
-| GET | `/api/companies/{slug}` | One company |
-| POST | `/api/companies/import` | Import `companies.csv` → MongoDB |
-| GET | `/api/jobs` | List scraped jobs |
-| POST | `/api/jobs/export` | Export jobs to CSV |
-| POST | `/api/ingestion/run` | Run full ingestion (background) |
-| GET | `/api/ingestion/status` | Check ingestion progress |
+### API design (simple — one automation endpoint)
 
-Example:
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| **POST** | **`/api/pipeline/run`** | **Main automation** — career URLs + scrape jobs + export CSV |
+| GET | `/api/pipeline/status` | Check pipeline progress |
+| GET | `/api/companies` | List companies (read) |
+| GET | `/api/companies/{slug}` | One company (read) |
+| GET | `/api/jobs` | List scraped jobs (read) |
+| GET | `/api/health` | Health check |
+
+### First time (import companies from CSV)
 
 ```bash
-curl -X POST "http://localhost:8000/api/ingestion/run?limit=10&slug=tcs"
-curl http://localhost:8000/api/ingestion/status
+curl -X POST "http://localhost:8000/api/pipeline/run?import_companies=true&limit=1"
 ```
 
-### Step 2 — Career URLs + job ingestion (CLI alternative)
+### Daily automation (companies already in MongoDB)
 
 ```bash
-# Full step-2 pipeline (top 20 companies)
-python scripts/run_job_ingestion.py
+curl -X POST "http://localhost:8000/api/pipeline/run?limit=10"
+```
 
-# One company only
-python scripts/run_job_ingestion.py --slug tcs
+### One company (e.g. TCS)
 
-# Import companies only
-python scripts/import_companies.py
+```bash
+curl -X POST "http://localhost:8000/api/pipeline/run?slug=tcs&limit=1"
+```
+
+### Check status + results
+
+```bash
+curl http://localhost:8000/api/pipeline/status
+curl "http://localhost:8000/api/jobs?company_slug=tcs&limit=10"
+```
+
+### CLI (simplest)
+
+```bash
+python run.py setup
+python run.py tcs
+python run.py --limit 10
 ```
 
 Output:

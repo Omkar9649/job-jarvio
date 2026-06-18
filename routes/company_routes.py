@@ -6,15 +6,6 @@ from utils.app_error import AppError
 router = APIRouter()
 
 
-@router.post("/import")
-def import_companies() -> dict:
-    try:
-        count = CompanyController.import_from_csv()
-    except FileNotFoundError as exc:
-        raise AppError(str(exc), 404) from exc
-    return {"message": "Companies imported from CSV", "count": count}
-
-
 @router.get("")
 def list_companies(
     limit: int = Query(50, ge=1, le=500),

@@ -12,9 +12,3 @@ def list_jobs(
     company_slug: str | None = None,
 ) -> dict:
     return JobController.list_jobs(limit=limit, skip=skip, company_slug=company_slug)
-
-
-@router.post("/export")
-def export_jobs() -> dict:
-    count = JobController.export_to_csv()
-    return {"message": "Jobs exported to CSV", "count": count, "path": "data/exports/jobs.csv"}
