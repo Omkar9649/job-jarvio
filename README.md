@@ -2,11 +2,6 @@
 
 **Personal AI career assistant** — finds jobs from company career pages and (later) matches them to your resume.
 
-| Doc | For |
-|-----|-----|
-| **[LEARNING.md](LEARNING.md)** | **Start here** — learn FastAPI → n8n → AI agent step by step |
-| [n8n/README.md](n8n/README.md) | Daily automation (Phase 2) |
-
 ---
 
 ## Branding
@@ -120,14 +115,15 @@ job-jarvio/
 │   └── app_error.py                      # like utils/appError.js
 │
 ├── data/
-│   ├── known_career_urls.json
-│   └── exports/jobs.csv
+│   └── exports/jobs.csv                  # generated on scrape
 │
 ├── scrapers/
-│   ├── ambitionbox/scrape_companies.py
 │   └── careers/
 │       ├── find_career_urls.py
 │       ├── scrape_jobs.py
+│       ├── fetch_jobs.py
+│       ├── job_parser.py
+│       ├── playwright_scraper.py
 │       └── http_client.py
 │
 └── run.py                                # simple CLI (use this daily)
@@ -138,10 +134,7 @@ job-jarvio/
 ```
 job-jarvio/
 ├── services/                             # resume, embed, match, notify (Phase 3+)
-├── validations/
-├── cron/
-├── n8n/workflows/
-└── mcp/
+└── validations/
 ```
 
 ---
@@ -271,10 +264,10 @@ cd job-jarvio
 pip install -r requirements.txt
 ```
 
-### Step 1 — Scrape company list (already done)
+### Step 1 — Import companies (first time only)
 
 ```bash
-python scrapers/ambitionbox/scrape_companies.py
+python run.py setup
 ```
 
 ### Start the API
@@ -337,7 +330,7 @@ Output:
 
 Flow:
 1. Import `companies.csv` → MongoDB `companies` collection
-2. Resolve **official career URLs** (`data/known_career_urls.json` + discovery)
+2. Resolve **official career URLs** (MongoDB `career_url` + discovery)
 3. Scrape job links from career pages → `jobs` collection
 4. Export all jobs to CSV
 

@@ -36,6 +36,7 @@ class PipelineController:
         try:
             if import_companies:
                 result["companies_imported"] = CompanyController.import_from_csv()
+                result["companies_seeded"] = CompanyController.seed_platform_defaults()
 
             result["career_url_stats"] = find_career_urls(limit=limit, slug=slug)
             result["job_scrape_stats"] = scrape_jobs(limit=limit, slug=slug)

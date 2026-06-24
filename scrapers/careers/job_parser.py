@@ -18,6 +18,7 @@ STRONG_JOB_URL_PATTERN = re.compile(
 )
 
 NOISE_URL_PARTS = (
+    "persona=",
     "locale=",
     "/content/",
     "/talentcommunity/",
@@ -30,6 +31,11 @@ NOISE_URL_PARTS = (
 )
 
 NOISE_TITLE_PARTS = (
+    "learn more",
+    "read more",
+    "view all",
+    "apply/shortlist",
+    "shortlist",
     "skip to main",
     "join our talent network",
     "fraud awareness",

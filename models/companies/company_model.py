@@ -15,6 +15,11 @@ SCHEMA = {
     "career_url_status": {"type": str, "allow_null": True},
     "last_career_lookup_at": {"type": datetime, "allow_null": True},
     "last_scraped_at": {"type": datetime, "allow_null": True},
+    "scrape_status": {"type": str, "allow_null": True},
+    "scrape_status_reason": {"type": str, "allow_null": True},
+    "last_scrape_job_count": {"type": int, "allow_null": True},
+    "scrape_type": {"type": str, "allow_null": True},
+    "scrape_config": {"type": dict, "allow_null": True},
     "created_at": {"type": datetime, "allow_null": True},
     "updated_at": {"type": datetime, "allow_null": True},
 }
@@ -143,6 +148,43 @@ class CompanyModel:
         cls.collection().update_one(
             {"slug": slug},
             {"$set": {"last_scraped_at": _utc_now(), "updated_at": _utc_now()}},
+        )
+
+    @classmethod
+    def update_scrape_status(
+        cls,
+        slug: str,
+        status: str,
+        reason: str | None = None,
+        job_count: int | None = None,
+    ) -> None:
+        update_fields = {
+            "scrape_status": status,
+            "scrape_status_reason": reason,
+            "last_scraped_at": _utc_now(),
+            "updated_at": _utc_now(),
+        }
+        if job_count is not None:
+            update_fields["last_scrape_job_count"] = job_count
+
+        cls.collection().update_one({"slug": slug}, {"$set": update_fields})
+
+    @classmethod
+    def update_scrape_config(
+        cls,
+        slug: str,
+        scrape_type: str | None,
+        scrape_config: dict | None = None,
+    ) -> None:
+        cls.collection().update_one(
+            {"slug": slug},
+            {
+                "$set": {
+                    "scrape_type": scrape_type,
+                    "scrape_config": scrape_config or {},
+                    "updated_at": _utc_now(),
+                }
+            },
         )
 
     @classmethod

@@ -72,10 +72,6 @@ def _looks_like_career_page(html: str, url: str) -> bool:
 
 
 def resolve_career_url(slug: str, profile_url: str | None = None) -> tuple[str | None, str, str | None]:
-    known_urls = CompanyController.load_known_career_urls()
-    if slug in known_urls:
-        return known_urls[slug], "known", None
-
     website_url = None
     overview_url = OVERVIEW_URL.format(slug=slug)
     try:

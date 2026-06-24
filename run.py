@@ -54,11 +54,14 @@ def main() -> None:
     print("\n--- Done ---")
     if import_companies:
         print(f"Companies imported: {result.get('companies_imported', 0)}")
+        print(f"Career/scrape defaults seeded: {result.get('companies_seeded', 0)}")
     else:
         career = result.get("career_url_stats", {})
         jobs = result.get("job_scrape_stats", {})
         print(f"Career URLs found: {career.get('found', 0)}")
         print(f"Jobs saved to MongoDB: {jobs.get('jobs_saved', 0)}")
+        if jobs.get("rejected"):
+            print(f"Scrapes rejected (needs review): {jobs.get('rejected', 0)}")
         print(f"Jobs exported to CSV: {result.get('jobs_exported', 0)}")
     print("\nCheck MongoDB Compass → job_jarvios → jobs")
 

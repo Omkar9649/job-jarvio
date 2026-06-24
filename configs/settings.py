@@ -8,7 +8,6 @@ load_dotenv(ROOT_DIR / "config.env")
 
 DATA_DIR = ROOT_DIR / "data"
 EXPORTS_DIR = DATA_DIR / "exports"
-KNOWN_CAREER_URLS_PATH = DATA_DIR / "known_career_urls.json"
 
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
 MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "job_jarvios")

@@ -5,6 +5,7 @@ __pycache__/
 .venv/
 venv/
 .env
+config.env
 
 # Local data / secrets
 *.db
